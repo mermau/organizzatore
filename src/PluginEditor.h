@@ -66,8 +66,10 @@ class Pointer : public ParamControl   // selettori MODE e FOOTAGE
 {
 public:
     Pointer (LearnHost& h, juce::RangedAudioParameter& p, int n, float spanDeg) : ParamControl (h, p), positions (n), span (spanDeg)
-    { dragPixels = 60.0f * (float) n; wheelStep = 1.0f / (float) (n - 1); }
+    { dragPixels = 14.0f * (float) (n - 1); wheelStep = 1.0f / (float) (n - 1); }
     void paint (juce::Graphics&) override;
+    void mouseUp (const juce::MouseEvent& e) override;   // clic senza trascinare: scatto successivo
+    void select (int i) { setReal ((float) juce::jlimit (0, positions - 1, i)); }
     float angleFor (int i) const { return -span * 0.5f + span * (float) i / (float) (positions - 1); }
     int positions; float span;
 };

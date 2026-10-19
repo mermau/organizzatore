@@ -501,14 +501,14 @@ private:
 
         vmain += bassGain * bassTick (fm, dt);
 
-        // click K1/K2: impulso PIK alla fine del gate (≈15 ms), 470k/120 pF, 2M2 sul sommatore
+        // click K1/K2: impulso PIK brevissimo alla fine del gate, 470k/120 pF, 2M2 sul sommatore
         if (clickT > -1.0)
         {
             clickT += dt;
             double pulse = 0.0;
             if (clickT >= 0.0 && clickT < kPik)
                 pulse = (p.k1 && ! p.k2) ? 1.0 : ((p.k1 || p.k2) ? 47.0 / 147.0 : 0.0);
-            if (clickT > kPik + 0.01) clickT = -1.0;
+            if (clickT > kPik + 0.002) clickT = -1.0;
             clickLp += (pulse * 15.0 * (47e3 / 2.67e6) - clickLp) * (1.0 - std::exp (-dt / 46e-6));
         }
         else clickLp *= 0.99;
@@ -594,7 +594,9 @@ private:
     static constexpr double kPressV = 6.5;       // tensione della barra a tasto premuto
     static constexpr double kThreshold = 0.1;    // soglia di conduzione (≈ −3,9 V di Vbc)
     static constexpr double kGate = 0.010;       // GATE PERCUSSIONE ≈ 10 ms
-    static constexpr double kPik = 0.015;        // impulso PIK
+    // impulso PIK: NAND tra il segnale e la sua copia ritardata da 22 kΩ e dal condensatore segnato "1µ5"
+    // (letto come 1,5 nF: con 1,5 µF durerebbe 23 ms e darebbe un "tump", non un click) → circa 25 µs
+    static constexpr double kPik = 25e-6;
     static constexpr double kOutScale = 0.6;     // volt → digitale
 
     Params p;

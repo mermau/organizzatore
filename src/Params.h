@@ -97,7 +97,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
 
     knob   (pid::expression, "Pedale d'espressione", 1.0f);
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { pid::tune, v }, "Pitch (accordatura, cent)", NormalisableRange<float> (-100.0f, 100.0f), 0.0f));
-    choice (pid::midiMode, "Tastiera MIDI", { "Canali (1 sup., 2 inf., 3 pedaliera)", "Split su un canale" }, 0);
+    choice (pid::midiMode, "Tastiera MIDI", { "Canali (1 sup., 2 inf., 3 pedaliera)", "Split su un canale" }, 1);
     p.push_back (std::make_unique<AudioParameterInt> (ParameterID { pid::split, v }, "Punto di split", 37, 95, 60));
     choice (pid::quality, "Qualita", { "Normale", "Alta (sovracampionamento)" }, 0);
     return { p.begin(), p.end() };

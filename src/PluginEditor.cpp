@@ -198,6 +198,17 @@ void Pointer::paint (Graphics& g)
     if (learning()) learnRing (g, b);
 }
 
+void Pointer::mouseUp (const MouseEvent& e)
+{
+    const bool wasClick = dragging && e.getDistanceFromDragStart() < 3 && ! e.mods.isPopupMenu();
+    ParamControl::mouseUp (e);
+    if (wasClick)
+    {
+        const int idx = (int) std::lround (value());
+        select (idx + 1 >= positions ? 0 : idx + 1);
+    }
+}
+
 void Drawbar::paint (Graphics& g)
 {
     const auto b = getLocalBounds().toFloat();
@@ -510,9 +521,9 @@ Panel::Panel (OrgProcessor& p) : proc (p), upper (p, t2::Upper), lower (p, t2::L
         }
     }
     modeSel = add<Pointer> (pid::bassMode, Rectangle<float> (34.0f, 34.0f).withCentre ({ 815.0f, ky }),
-                            "Bassi: OFF / PERC. (suono percussivo, basso elettrico) / SUST. (suono tenuto, pedaliera d'organo) / OFF", 4, 150.0f);
+                            "Bassi: OFF / PERC. (suono percussivo, basso elettrico) / SUST. (suono tenuto, pedaliera d'organo) / OFF. Clic: posizione successiva; clic su una scritta: quella posizione", 4, 216.0f);
     footSel = add<Pointer> (pid::bassFoot, Rectangle<float> (34.0f, 34.0f).withCentre ({ 859.0f, ky }),
-                            "Bassi: piede 16' / 8' / 4'", 3, 70.0f);
+                            "Bassi: piede 16' / 8' / 4'. Clic: posizione successiva; clic su una scritta: quella posizione", 3, 110.0f);
 
     // ------------------------------------------------------------ preselettori
     for (int i = 0; i < 4; ++i)
@@ -888,6 +899,11 @@ void Panel::showControlMenu (Component& c, const String& id)
 
 void Panel::mouseDown (const MouseEvent& e)
 {
+    // clic sulle scritte dei selettori dei bassi
+    for (int i = 0; i < 4; ++i)
+        if (e.position.getDistanceFrom (polar ({ 815.0f, ky() }, 23.0f, modeSel->angleFor (i))) < 6.5f) { modeSel->select (i); return; }
+    for (int i = 0; i < 3; ++i)
+        if (e.position.getDistanceFrom (polar ({ 859.0f, ky() }, 22.5f, footSel->angleFor (i))) < 5.5f) { footSel->select (i); return; }
     if (logoArea.contains (e.position)) showSettingsMenu();
     else if (ledArea.expanded (3.0f).contains (e.position))
     {

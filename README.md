@@ -17,7 +17,7 @@ Crumar Organizer T2 seguendo il manuale d'uso, il manuale di servizio T1-T2 e gl
 | **P-497 / P-527** (drawbar, preselettori, percussione) | Manuale superiore: Vbc = −(1,5 V · (1 − drawbar/8) + Vperc): i drawbar coprono 1,5 V, la percussione gli altri 2,5 V (può essere più forte dei drawbar). Manuale inferiore: drawbar su tutti i 4 V. Preselettori come la tabella di verità dei 4016 (100 kΩ in parallelo = metà livello): **2** = 16' 5⅓' 8' (888000000), **3** = 16' + 2' a metà, **4** = pieno. |
 | **Percussione** | Condensatore da 2,2 µF scaricato durante il GATE e ricaricato con (33 kΩ + DECAY 220 kΩ) · 2,2 µF: 73 … 560 ms. Trigger singolo (riparte solo dopo aver rilasciato tutti i tasti), si somma a tutti i tasti tenuti. Esclusa quando il sustain è acceso. |
 | **GATE PERCUSSIONE** (≈10 ms) | Al primo tasto premuto l'uscita dei filtri è cortocircuitata per circa 10 ms (contro i click di commutazione), poi il suono parte netto. |
-| **K1, K2 (PIK)** | Impulso di circa 15 ms alla fine del gate, filtrato 470k/120 pF e sommato all'uscita tramite 2,2 MΩ. K2 lo attenua (47 kΩ verso massa). |
+| **K1, K2 (PIK)** | Impulso brevissimo (≈25 µs) alla fine del gate, filtrato 470k/120 pF e sommato all'uscita tramite 2,2 MΩ: un "tic" d'attacco di circa 0,1 ms. K2 lo attenua (47 kΩ verso massa). Il condensatore del monostabile, segnato "1µ5", è letto come 1,5 nF: con 1,5 µF l'impulso durerebbe 23 ms e si sentirebbero due colpi secchi, simili a una distorsione. |
 | **P-509 Filtri d'ottava** (DWG 11) | Sette filtri passa-basso di 3° ordine (cella RC 47 k + filtro a reazione multipla), uno per ottava di frequenza, tarati come prescrive il manuale: trimmer sulla massima ampiezza al Sol dell'ottava (98, 196 … 6272 Hz). Le quadre diventano quasi sinusoidali (3ª armonica −30 … −43 dB), il guadagno d'ingresso (12 k … 68 k) e l'accoppiamento d'uscita (470n – 8,2k – 470n su 2,7 k) tengono il livello entro circa ±5 dB su tutta la tastiera. |
 | **P-525 Sustain** (DWG 4) | 61 moduli: al rilascio la tensione del tasto si scarica e la nota svanisce (prima le armoniche più deboli). LENGTH regola la durata; AUTO taglia le code appena si preme un nuovo tasto (resta solo l'ultimo accordo). Il pedale di sustain (CC 64) equivale a ON. |
 | **P-499 M 147 + P-502** (DWG 13, 14) | Basso monofonico a priorità sulla nota più bassa, 24 tasti (prime due ottave del manuale inferiore) o pedaliera da 18 note. Somma pesata (22k/39k/82k/150k) delle uscite di piede: dente di sega **a gradini** — 16 gradini al 16', 8 all'8', 4 al 4'. Impulso TP a ogni nuova nota prioritaria, livello TS a tasto tenuto. In MAN. le due ottave basse non suonano le armoniche (barra staccata). |
@@ -36,9 +36,13 @@ Crumar Organizer T2 seguendo il manuale d'uso, il manuale di servizio T1-T2 e gl
 
 ## Uso con la tastiera MIDI (Arturia KeyLab)
 
-- **Canali** (predefinito): 1 = manuale superiore, 2 = inferiore, 3 = pedaliera. In alternativa, dal menu del
-  logo, **split** su un solo canale (sotto lo split il manuale inferiore). Do2 (nota 36) è il primo tasto; le note
-  fuori estensione sono riportate d'ottava.
+- **Split** (predefinito, una sola tastiera): sotto il Do4 (nota 60) il manuale inferiore, dal Do4 in su il superiore.
+  Do2 (nota 36) è il primo tasto di ogni manuale. Con i bassi su **MAN.** le prime due ottave del manuale inferiore
+  (Do2–Si3) suonano solo il basso, come sull'originale: con lo split al Do4 la mano sinistra suona quindi il basso.
+  Per suonare accordi sul manuale inferiore porta la levetta su **PED.** (il basso passa alla pedaliera, canale 3)
+  oppure sposta lo split più in alto dal menu del logo.
+- **Canali** (dal menu del logo): 1 = manuale superiore, 2 = inferiore, 3 = pedaliera. Le note fuori estensione
+  sono riportate d'ottava.
 - Assegnazioni predefinite (modalità User della KeyLab): i 9 **fader** sui drawbar (CC 73 75 79 72 80 81 82 83 85,
   dal menu possono passare al manuale inferiore), le 9 **manopole** su RATE, VIBRATO, TREMOLO, volume e durata della
   percussione e sui 4 comandi dei bassi (CC 74 71 76 77 93 18 19 16 17), rotella di modulazione sul vibrato, CC 7
