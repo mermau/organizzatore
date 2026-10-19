@@ -1,0 +1,75 @@
+name: Build macOS
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache JUCE
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: juce-8.0.4-${{ runner.os }}
+
+      - name: Configura (binario universale Apple Silicon + Intel)
+        run: |
+          cmake -B build -G "Unix Makefiles" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+
+      - name: Compila VST3, AU e Standalone
+        run: cmake --build build --config Release --target Organizzatore_VST3 Organizzatore_AU Organizzatore_Standalone -j 4
+
+      - name: Test del motore DSP
+        run: |
+          c++ -O2 -std=c++17 -Isrc tests/engine_test.cpp -o engine_test
+          mkdir -p test-audio && ./engine_test test-audio
+
+      - name: Firma ad-hoc
+        run: |
+          A=build/Organizzatore_artefacts/Release
+          codesign --force --deep --sign - "$A/VST3/Organizzatore.vst3"
+          codesign --force --deep --sign - "$A/AU/Organizzatore.component"
+          codesign --force --deep --sign - "$A/Standalone/Organizzatore.app"
+
+      - name: Validazione Audio Unit (auval)
+        continue-on-error: true
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R build/Organizzatore_artefacts/Release/AU/Organizzatore.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          auval -v aumu Orgz Clfx
+
+      - name: Pacchetto
+        run: |
+          A=build/Organizzatore_artefacts/Release
+          mkdir -p dist/Organizzatore
+          cp -R "$A/VST3/Organizzatore.vst3" "$A/AU/Organizzatore.component" "$A/Standalone/Organizzatore.app" dist/Organizzatore/
+          cp scripts/installa.command dist/Organizzatore/"Installa Organizzatore.command"
+          chmod +x dist/Organizzatore/"Installa Organizzatore.command"
+          cp README.md dist/Organizzatore/LEGGIMI.md
+          (cd dist && ditto -c -k --keepParent Organizzatore Organizzatore-macOS.zip)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Organizzatore-macOS
+          path: dist/Organizzatore-macOS.zip
+
+      - name: Release (solo sui tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/Organizzatore-macOS.zip --title "Organizzatore ${GITHUB_REF_NAME}" --notes "Build macOS universale (Apple Silicon + Intel) - VST3, AU e Standalone."
