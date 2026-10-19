@@ -131,37 +131,46 @@ void OrgProcessor::readParams()
 }
 
 // Canali: 1 (e ogni altro) = manuale superiore, 2 = inferiore, 3 = pedaliera.
-// Split: sotto il punto di split il manuale inferiore, sopra il superiore (canale 3 sempre pedaliera).
+// Split (una sola tastiera, tre zone):
+//   dallo split in su            → manuale superiore (Do2 = primo tasto)
+//   dallo split dei bassi allo split → manuale inferiore, a partire dal suo Do4 (tasto 24): le due ottave più
+//                                      basse del manuale inferiore, sull'originale, sono quelle dei bassi
+//   sotto lo split dei bassi     → bassi: prime ottave del manuale inferiore (MAN.) o pedaliera (PED.)
+// Il canale 3 resta sempre la pedaliera.
 void OrgProcessor::routeNote (int channel, int note, bool on)
 {
     const int ch = juce::jlimit (1, 16, channel) - 1;
-    int target;
+    auto fold = [] (int k, int n) { while (k < 0) k += 12; while (k >= n) k -= 12; return k; };
+    int target, key;
     if (on)
     {
-        if (ch == 2) target = 2;
-        else if ((int) rawv (pid::midiMode) == 1) target = note < (int) rawv (pid::split) ? 1 : 0;
-        else target = ch == 1 ? 1 : 0;
-        noteTarget[ch][(size_t) note] = target;
+        if (ch == 2) { target = 2; key = fold (note - 36, t2::kPedals); }
+        else if ((int) rawv (pid::midiMode) == 1)
+        {
+            const int sp = (int) rawv (pid::split);
+            const int bs = juce::jmin ((int) rawv (pid::bassSplit), sp);
+            if (note >= sp)      { target = 0; key = fold (note - 36, t2::kKeys); }
+            else if (note >= bs) { target = 1; key = fold (note - bs + 24, t2::kKeys); }
+            else if (rawv (pid::bassPedal) > 0.5f) { target = 2; key = fold (note - 36, t2::kPedals); }
+            else                 { target = 1; key = fold (note - 36, t2::kBassKeys); }
+        }
+        else { target = ch == 1 ? 1 : 0; key = fold (note - 36, t2::kKeys); }
+        noteTarget[ch][(size_t) note] = target * 128 + key;
     }
     else
     {
-        target = noteTarget[ch][(size_t) note];
+        const int packed = noteTarget[ch][(size_t) note];
         noteTarget[ch][(size_t) note] = -1;
-        if (target < 0) return;
+        if (packed < 0) return;
+        target = packed / 128; key = packed % 128;
     }
     if (target == 2)
     {
-        int k = note - 36;
-        while (k < 0) k += 12;
-        while (k >= t2::kPedals) k -= 12;
-        pedalCount[(size_t) k] = juce::jmax (0, pedalCount[(size_t) k] + (on ? 1 : -1));
-        if (pedalCount[(size_t) k] > 0) engine.pedalOn (k); else engine.pedalOff (k);
+        pedalCount[(size_t) key] = juce::jmax (0, pedalCount[(size_t) key] + (on ? 1 : -1));
+        if (pedalCount[(size_t) key] > 0) engine.pedalOn (key); else engine.pedalOff (key);
         return;
     }
-    int k = note - 36;                       // Do2 = primo tasto
-    while (k < 0) k += 12;
-    while (k >= t2::kKeys) k -= 12;
-    midiCount[target][(size_t) k] = juce::jmax (0, midiCount[target][(size_t) k] + (on ? 1 : -1));
+    midiCount[target][(size_t) key] = juce::jmax (0, midiCount[target][(size_t) key] + (on ? 1 : -1));
 }
 
 void OrgProcessor::syncKeys()

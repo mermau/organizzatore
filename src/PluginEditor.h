@@ -178,6 +178,7 @@ private:
     Manual upper, lower;
     juce::Rectangle<float> logoArea, stickerArea, ledArea;
     bool led = false, modOn = true;
+    int zoneKey = -2, zoneBassSplit = -2; bool zoneBass = true;   // segni dello split e della zona dei bassi sulle tastiere
     juce::String learnId;
 };
 } // namespace org::ui

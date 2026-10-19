@@ -75,7 +75,7 @@ private:
     std::array<std::atomic<bool>, t2::kKeys> guiHeld[2];
     std::array<std::atomic<bool>, t2::kKeys> shownDown[2];
     std::array<bool, t2::kKeys> engineDown[2] {};
-    std::array<int, 128> noteTarget[16];   // dove è finita ogni nota (per il note-off): 0 sup., 1 inf., 2 pedale, −1
+    std::array<int, 128> noteTarget[16];   // dove è finita ogni nota (per il note-off): destinazione·128 + tasto, −1
     std::atomic<float> wheel { 0.0f };
     bool sustainPedal = false;
 

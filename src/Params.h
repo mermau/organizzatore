@@ -31,8 +31,9 @@ inline constexpr const char* susAuto    = "sus_auto";
 inline constexpr const char* susLength  = "sus_length";
 inline constexpr const char* expression = "expression";
 inline constexpr const char* tune       = "tune";
-inline constexpr const char* midiMode   = "midi_mode";
+inline constexpr const char* midiMode   = "midi_route";   // (ex midi_mode: nuovo ID perché le sessioni salvate ripartano in split)
 inline constexpr const char* split      = "split";
+inline constexpr const char* bassSplit  = "bass_split";
 inline constexpr const char* quality    = "quality";
 }
 
@@ -99,6 +100,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { pid::tune, v }, "Pitch (accordatura, cent)", NormalisableRange<float> (-100.0f, 100.0f), 0.0f));
     choice (pid::midiMode, "Tastiera MIDI", { "Canali (1 sup., 2 inf., 3 pedaliera)", "Split su un canale" }, 1);
     p.push_back (std::make_unique<AudioParameterInt> (ParameterID { pid::split, v }, "Punto di split", 37, 95, 60));
+    p.push_back (std::make_unique<AudioParameterInt> (ParameterID { pid::bassSplit, v }, "Split dei bassi", 36, 95, 48));
     choice (pid::quality, "Qualita", { "Normale", "Alta (sovracampionamento)" }, 0);
     return { p.begin(), p.end() };
 }

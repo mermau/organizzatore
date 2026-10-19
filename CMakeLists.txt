@@ -83,4 +83,14 @@ if(ORG_BUILD_TESTS)
     target_link_libraries(gui_snapshot PRIVATE
         Organizzatore_Data juce::juce_audio_utils juce::juce_dsp
         juce::juce_recommended_config_flags)
+
+    juce_add_console_app(proc_test PRODUCT_NAME "proc_test")
+    target_sources(proc_test PRIVATE tests/proc_test.cpp src/PluginProcessor.cpp src/PluginEditor.cpp)
+    target_include_directories(proc_test PRIVATE src)
+    target_compile_definitions(proc_test PRIVATE
+        JucePlugin_Name="Organizzatore"
+        JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_MODAL_LOOPS_PERMITTED=1)
+    target_link_libraries(proc_test PRIVATE
+        Organizzatore_Data juce::juce_audio_utils juce::juce_dsp
+        juce::juce_recommended_config_flags)
 endif()

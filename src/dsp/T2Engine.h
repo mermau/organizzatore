@@ -411,7 +411,7 @@ private:
         bendSm += (p.bend - bendSm) * (1.0 - std::exp (-dt / 0.004));
         lfoStep = 4.0 * lfoHz() / fs;
         tuneRatio = std::pow (2.0, p.tuneCents / 1200.0) * (1.0 + 0.1225 * bendSm);
-        lmGain = loadedPot (p.lmVolume, 100e3, 2747.0);
+        lmGain = audioTaper (p.lmVolume);   // LOWER MANUAL: 100 kΩ logaritmico
         bassGain = 0.47 * loadedPot (p.bassVolume, 100e3, 100e3);
         outGain = audioTaper (p.master) * std::clamp ((double) p.expression, 0.0, 1.0) * kOutScale;
     }

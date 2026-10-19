@@ -841,6 +841,42 @@ float Panel::ky() const { return 71.0f; }
 
 void Panel::paintOverChildren (Graphics& g)
 {
+    // dove vanno le note della tastiera MIDI: punto di split e zona dei bassi (levetta su MAN.)
+    {
+        auto keyX = [] (const Manual& m, int k)
+        {
+            const float kw = (float) m.getWidth() / 36.0f;
+            static const float wo[12] = { 0, 0.62f, 1, 1.76f, 2, 3, 3.58f, 4, 4.68f, 5, 5.80f, 6 };
+            return (float) m.getX() + ((float) (k / 12) * 7.0f + wo[k % 12]) * kw;
+        };
+        const Colour mark (0xffe0402c);
+        auto bracket = [&] (const Manual& m, int k0, int k1, const String& label)
+        {
+            const float x0 = keyX (m, k0) + 2.0f, x1 = keyX (m, k1) - 2.0f, y = (float) m.getY() - 5.0f;
+            g.setColour (mark.withAlpha (0.85f));
+            g.drawLine (x0, y, x1, y, 1.0f);
+            g.drawLine (x0, y - 2.0f, x0, y + 2.0f, 1.0f);
+            g.drawLine (x1, y - 2.0f, x1, y + 2.0f, 1.0f);
+            const float w = GlyphArrangement::getStringWidth (Fonts::get().label (4.4f * 1.12f), label) + 4.0f;
+            g.setColour (Colour (0xff0c0c0c));
+            g.fillRect (Rectangle<float> ((x0 + x1) * 0.5f - w * 0.5f, y - 3.0f, w, 6.0f));
+            g.setColour (kPrint);
+            text (g, label, { (x0 + x1) * 0.5f, y }, 4.4f);
+        };
+        if (zoneKey >= 0 && zoneKey <= 60)
+        {
+            // manuale superiore: dove comincia la sua zona sulla tastiera MIDI
+            const float x = keyX (upper, zoneKey), y = (float) upper.getY() - 1.0f;
+            Path tri; tri.addTriangle (x - 3.2f, y - 4.8f, x + 3.2f, y - 4.8f, x, y);
+            g.setColour (mark); g.fillPath (tri);
+            g.setColour (kPrint);
+            text (g, "SPLIT", { x + 13.0f, y - 3.0f }, 4.2f);
+            // manuale inferiore: tasti raggiunti dalla zona centrale della tastiera MIDI
+            const int width = jmax (0, zoneKey + 36 - zoneBassSplit);
+            if (width > 0) bracket (lower, 24, jmin (61, 24 + width), "ZONA DELLO SPLIT");
+        }
+        if (zoneBass) bracket (lower, 0, 24, "BASS (MAN.)");
+    }
     // LED della modulazione (lampeggia con la quadra del trigger di Schmitt)
     const auto c = ledArea.getCentre();
     const float r = 2.6f;
@@ -861,6 +897,13 @@ void Panel::timerCallback()
     const bool l = proc.lfoLed();
     const bool mo = proc.apvts.getRawParameterValue (pid::modOn)->load() > 0.5f;
     if (l != led || mo != modOn) { led = l; modOn = mo; repaint (ledArea.expanded (6.0f).toNearestInt()); }
+    {
+        const bool split = proc.apvts.getRawParameterValue (pid::midiMode)->load() > 0.5f;
+        const int zk = split ? (int) proc.apvts.getRawParameterValue (pid::split)->load() - 36 : -1;
+        const bool zb = proc.apvts.getRawParameterValue (pid::bassPedal)->load() < 0.5f;
+        const int bs = jmin ((int) proc.apvts.getRawParameterValue (pid::bassSplit)->load(), zk + 36);
+        if (zk != zoneKey || zb != zoneBass || bs != zoneBassSplit) { zoneKey = zk; zoneBass = zb; zoneBassSplit = bs; repaint(); }
+    }
     upper.refresh();
     lower.refresh();
     if (lever != nullptr)
@@ -925,11 +968,16 @@ void Panel::showSettingsMenu()
 
     PopupMenu mm;
     mm.addItem (100, "Per canale: 1 = superiore, 2 = inferiore, 3 = pedaliera", true, ! splitMode);
-    mm.addItem (101, "Split su un canale (sotto lo split il manuale inferiore)", true, splitMode);
+    mm.addItem (101, "Split su un canale: bassi | manuale inferiore | superiore", true, splitMode);
     PopupMenu sm;
     const char* names[] = { "Do", "Do#", "Re", "Re#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si" };
     for (int n : { 48, 53, 55, 60, 65, 67, 72 })
         sm.addItem (200 + n, String (names[n % 12]) + String (n / 12 - 1) + " (nota " + String (n) + ")", true, sp == n);
+    const int bsp = (int) proc.apvts.getRawParameterValue (pid::bassSplit)->load();
+    PopupMenu bm;
+    bm.addItem (736, "Nessuna zona dei bassi", true, bsp <= 36);
+    for (int n : { 41, 43, 48, 53, 55 })
+        bm.addItem (700 + n, "Sotto " + String (names[n % 12]) + String (n / 12 - 1) + " (nota " + String (n) + ")", true, bsp == n);
     PopupMenu tm;
     for (int c : { -50, -25, -10, 0, 10, 25, 50 })
         tm.addItem (400 + c + 100, (c > 0 ? "+" : "") + String (c) + " cent", true, std::abs (tn - (float) c) < 0.5f);
@@ -943,7 +991,8 @@ void Panel::showSettingsMenu()
     PopupMenu m;
     m.addSectionHeader ("Organizzatore T2  -  Collateral Effects");
     m.addSubMenu ("Tastiera MIDI", mm);
-    m.addSubMenu ("Punto di split", sm, splitMode);
+    m.addSubMenu ("Punto di split (manuale superiore da qui in su)", sm, splitMode);
+    m.addSubMenu ("Zona dei bassi (all'estremo sinistro)", bm, splitMode);
     m.addSubMenu ("Fader della KeyLab", fm);
     m.addSubMenu ("Pitch (accordatura generale)", tm);
     m.addSubMenu ("Qualita audio", qm);
@@ -955,6 +1004,11 @@ void Panel::showSettingsMenu()
         if (r == 100) mode->setValueNotifyingHost (0.0f);
         else if (r == 101) mode->setValueNotifyingHost (1.0f);
         else if (r >= 200 && r < 300) split->setValueNotifyingHost (split->convertTo0to1 ((float) (r - 200)));
+        else if (r >= 700 && r < 800)
+        {
+            auto* bsplit = proc.apvts.getParameter (pid::bassSplit);
+            bsplit->setValueNotifyingHost (bsplit->convertTo0to1 ((float) (r - 700)));
+        }
         else if (r >= 400 && r < 500) tune->setValueNotifyingHost (tune->convertTo0to1 ((float) (r - 500)));
         else if (r == 500 || r == 501) proc.resetDefaultMapping (r == 501);
         else if (r == 600) quality->setValueNotifyingHost (0.0f);

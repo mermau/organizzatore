@@ -36,11 +36,13 @@ Crumar Organizer T2 seguendo il manuale d'uso, il manuale di servizio T1-T2 e gl
 
 ## Uso con la tastiera MIDI (Arturia KeyLab)
 
-- **Split** (predefinito, una sola tastiera): sotto il Do4 (nota 60) il manuale inferiore, dal Do4 in su il superiore.
-  Do2 (nota 36) è il primo tasto di ogni manuale. Con i bassi su **MAN.** le prime due ottave del manuale inferiore
-  (Do2–Si3) suonano solo il basso, come sull'originale: con lo split al Do4 la mano sinistra suona quindi il basso.
-  Per suonare accordi sul manuale inferiore porta la levetta su **PED.** (il basso passa alla pedaliera, canale 3)
-  oppure sposta lo split più in alto dal menu del logo.
+- **Split** (predefinito, una sola tastiera come la KeyLab 49), tre zone segnate in rosso sulle tastiere a schermo:
+  - sotto il **Do3** (nota 48): **bassi** (con la levetta su MAN. suonano le prime due ottave del manuale inferiore,
+    su PED. la pedaliera);
+  - dal **Do3** al **Si3**: **manuale inferiore**, dal suo Do4 in su (sull'originale le due ottave più basse del
+    manuale inferiore sono quelle dei bassi, quindi gli accordi si suonano da lì in su);
+  - dal **Do4** (nota 60) in su: **manuale superiore**.
+  I due punti si spostano dal menu del logo (*Punto di split*, *Zona dei bassi*).
 - **Canali** (dal menu del logo): 1 = manuale superiore, 2 = inferiore, 3 = pedaliera. Le note fuori estensione
   sono riportate d'ottava.
 - Assegnazioni predefinite (modalità User della KeyLab): i 9 **fader** sui drawbar (CC 73 75 79 72 80 81 82 83 85,
